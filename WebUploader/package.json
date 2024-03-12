@@ -1,0 +1,17 @@
+{
+  "name": "webuploader",
+  "version": "1.0.0",
+  "description": "",
+  "main": "WebDataTransfer.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "os": "^0.1.2",
+    "playwright": "^1.42.1",
+    "puppeteer": "^22.4.1"
+  }
+}
