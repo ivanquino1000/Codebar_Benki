@@ -21,13 +21,15 @@ Public Enum datatype
     NormalText
     LabelText
     Date
+    BigWideNumber
+    SmallWideNumber
     Barcode
 End Enum
 
 Private Type TModel
     RowSize         As Integer
     ColumnSize      As Integer
-    Theme           As Integer
+    Theme           As Themes
     FallBack        As Dictionary
     GridMap         As Variant
     ProductCoord    As Dictionary
@@ -48,7 +50,8 @@ Private Sub Class_Initialize()
     With this
         .RowSize = 6
         .ColumnSize = 3
-        .Theme = light
+        '.Theme = light
+
 
         Set .FallBack = New Dictionary
         Set .ProductCoord = New Dictionary
@@ -87,18 +90,6 @@ Private Sub Class_Initialize()
             .Add "WholeSalePrice", Array("R", 0)
 
         End With
-        With .ProductFormat
-            .Add CreateFormat(datatype.ShortNumber, Themes.light), "BoxPrice"
-            .Add CreateFormat(datatype.ShortNumber, Themes.dark), "BoxQty"
-            .Add CreateFormat(datatype.TitleText, Themes.dark), "Code"
-            .Add CreateFormat(datatype.TitleText, Themes.dark), "Cost"
-            .Add CreateFormat(datatype.NormalText, Themes.light), "Description"
-            .Add CreateFormat(datatype.NormalText, Themes.light), "Name"
-            .Add CreateFormat(datatype.ShortNumber, Themes.dark), "Qty"
-            .Add CreateFormat(datatype.longnumber, Themes.dark), "SellingPrice"
-            .Add CreateFormat(datatype.LabelText, Themes.dark), "Supplier"
-            .Add CreateFormat(datatype.ShortNumber, Themes.light), "WholeSalePrice"
-        End With
 
         With .CompanyCoord
             .Add "Address", Array(2, 2)
@@ -117,21 +108,12 @@ Private Sub Class_Initialize()
             .Add "facebook", Array("R", 1)
 
         End With
-        With .CompanyFormat
-            .Add CreateFormat(datatype.NormalText, Themes.light), "Address"
-            .Add CreateFormat(datatype.TitleText, Themes.dark), "RazonSocial"
-            .Add CreateFormat(datatype.NormalText, Themes.light), "Ruc"
-            .Add CreateFormat(datatype.NormalText, Themes.light), "Email"
-            .Add CreateFormat(datatype.NormalText, Themes.light), "Phone"
-            .Add CreateFormat(datatype.NormalText, Themes.light), "facebook"
-        End With
 
         With .LabelCoord
             .Add "BoxLabel", Array(4, 1)
             .Add "BoxTotalPrice", Array(6, 1)
             .Add "DozLabel", Array(4, 2)
             .Add "DozTotalPrice", Array(6, 2)
-            .Add "Date", Array(6, 3)
             .Add "Barcode", Array(3, 1)
 
         End With
@@ -146,34 +128,20 @@ Private Sub Class_Initialize()
             .Add "PaymentLabel", Array("R", 0)
             .Add "PrintingQty", Array("R", 0)
         End With
-        With .LabelFormat
-
-            .Add CreateFormat(datatype.LabelText, Themes.dark), "BoxLabel"
-            .Add CreateFormat(datatype.ShortNumber, Themes.light), "BoxTotalPrice"
-            .Add CreateFormat(datatype.LabelText, Themes.dark), "DozLabel"
-            .Add CreateFormat(datatype.ShortNumber, Themes.light), "DozTotalPrice"
-            .Add CreateFormat(datatype.Barcode, Themes.dark), "Barcode"
-            .Add CreateFormat(datatype.Date, Themes.dark), "Date"
-
-            .Add CreateFormat(datatype.LabelText, Themes.dark), "PaymentLabel"
-            .Add CreateFormat(datatype.NormalText, Themes.light), "PrintingQty"
-
-
-        End With
         With .LabelValues
             .Add "BoxLabel", "Box()"
             .Add "BoxTotalPrice", 88
-            .Add "DozLabel", "Docena()"
+            .Add "DozLabel", "Docena"
             .Add "DozTotalPrice", 99
             .Add "Date", Now
             .Add "Barcode", "EmptyBC"
-            .Add "PaymentLabel", "YAPE/PLIN"
-            .Add "PrintingQty", "Out: 9 Units"
+            .Add "PaymentLabel", "YAPE"
+            .Add "PrintingQty", " X UNITS "
         End With
 
         With FallBack
 
-            .Add "Cost", "Name"
+            .Add "Cost", "RazonSocial"
             .Add "Description", "Address"
             .Add "Supplier", "Date"
 
@@ -184,17 +152,92 @@ Private Sub Class_Initialize()
 
 End Sub
 
+Public Sub InitializeFormat(Optional ByVal Th As Themes)
+    With this
 
+        If IsMissing(Th) Then
+            Debug.Print "Theme Must Be Provided"
+            Exit Sub
+        End If
+        .Theme = Th
+
+
+        If .Theme = dark Then
+            With .ProductFormat
+                .Add CreateFormat(datatype.TitleText, Themes.light), "Code"
+                .Add CreateFormat(datatype.TitleText, Themes.light), "Cost"
+                .Add CreateFormat(datatype.NormalText, Themes.light), "Description"
+                .Add CreateFormat(datatype.NormalText, Themes.light), "Name"
+                .Add CreateFormat(datatype.SmallWideNumber, Themes.light), "BoxPrice"
+                .Add CreateFormat(datatype.SmallWideNumber, Themes.light), "WholeSalePrice"
+                .Add CreateFormat(datatype.BigWideNumber, Themes.light), "SellingPrice"
+                .Add CreateFormat(datatype.LabelText, Themes.light), "Supplier"
+            End With
+            With .CompanyFormat
+                .Add CreateFormat(datatype.NormalText, Themes.light), "address"
+                .Add CreateFormat(datatype.TitleText, Themes.light), "RazonSocial"
+                .Add CreateFormat(datatype.NormalText, Themes.light), "Ruc"
+                .Add CreateFormat(datatype.NormalText, Themes.light), "Email"
+                .Add CreateFormat(datatype.NormalText, Themes.light), "Phone"
+                .Add CreateFormat(datatype.NormalText, Themes.light), "facebook"
+            End With
+            With .LabelFormat
+
+                .Add CreateFormat(datatype.LabelText, Themes.light), "BoxLabel" ' !!! Custom Production: Changed for OverHeating
+                .Add CreateFormat(datatype.ShortNumber, Themes.light), "BoxTotalPrice"
+                .Add CreateFormat(datatype.LabelText, Themes.light), "DozLabel" '!!! Custom Production: Changed for OverHeating
+                .Add CreateFormat(datatype.ShortNumber, Themes.light), "DozTotalPrice"
+                .Add CreateFormat(datatype.Barcode, Themes.light), "Barcode"    'Check In Prod / color
+                .Add CreateFormat(datatype.Date, Themes.light), "Date"
+
+                .Add CreateFormat(datatype.LabelText, Themes.light), "PaymentLabel" ' !!! Custom Production: Changed for OverHeating
+                .Add CreateFormat(datatype.NormalText, Themes.light), "PrintingQty"
+            End With
+        Else    'light
+            With .ProductFormat
+                .Add CreateFormat(datatype.TitleText, Themes.light), "Code"
+                .Add CreateFormat(datatype.TitleText, Themes.light), "Cost"
+                .Add CreateFormat(datatype.NormalText, Themes.light), "Description"
+                .Add CreateFormat(datatype.NormalText, Themes.light), "Name"
+                .Add CreateFormat(datatype.ShortNumber, Themes.light), "BoxPrice"
+                .Add CreateFormat(datatype.ShortNumber, Themes.light), "WholeSalePrice"
+                .Add CreateFormat(datatype.longnumber, Themes.light), "SellingPrice"
+                .Add CreateFormat(datatype.LabelText, Themes.light), "Supplier"
+            End With
+            With .CompanyFormat
+                .Add CreateFormat(datatype.NormalText, Themes.light), "address"
+                .Add CreateFormat(datatype.TitleText, Themes.light), "RazonSocial"
+                .Add CreateFormat(datatype.NormalText, Themes.light), "Ruc"
+                .Add CreateFormat(datatype.NormalText, Themes.light), "Email"
+                .Add CreateFormat(datatype.NormalText, Themes.light), "Phone"
+                .Add CreateFormat(datatype.NormalText, Themes.light), "facebook"
+            End With
+            With .LabelFormat
+
+                .Add CreateFormat(datatype.LabelText, Themes.light), "BoxLabel"
+                .Add CreateFormat(datatype.ShortNumber, Themes.light), "BoxTotalPrice"
+                .Add CreateFormat(datatype.LabelText, Themes.light), "DozLabel"
+                .Add CreateFormat(datatype.ShortNumber, Themes.light), "DozTotalPrice"
+                .Add CreateFormat(datatype.Barcode, Themes.light), "Barcode"    'Check In Prod / color
+                .Add CreateFormat(datatype.Date, Themes.light), "Date"
+
+                .Add CreateFormat(datatype.LabelText, Themes.light), "PaymentLabel"
+                .Add CreateFormat(datatype.NormalText, Themes.light), "PrintingQty"
+            End With
+        End If
+
+    End With
+End Sub
 Private Function CreateFormat(ByVal datatype As datatype, ByVal Theme As Themes) As Object
     Dim format      As FormatSettings
     Set format = New FormatSettings
-    If (this.Theme <> light) Then
-        Theme = 1 - Theme
-    End If
+    '    If (this.Theme <> light) Then
+    '        Theme = 1 - Theme
+    '    End If
     'Theme Changes
     With format
 
-        Select Case Theme
+        Select Case Theme    'Theme
             Case light
                 .BgColor = RGB(255, 255, 255)
                 .FontColor = RGB(0, 0, 0)
@@ -204,59 +247,76 @@ Private Function CreateFormat(ByVal datatype As datatype, ByVal Theme As Themes)
         End Select
         'DataType Changes
         Select Case datatype
-                'Code-39-Logitogo - 36
 
             Case longnumber
-                .FontName = "Chinese Rocks Rg"
-                .FontSize = 24
+                .FontName = "Bahnschrift SemiBold"
+                .fontSize = 36
                 .Bold = True
-                .HAlign = xlRight
+                .HAlign = xlLeft
                 .VAlign = xlCenter
                 .Shrink = True
-                .NumberFormat = "_($* #,##0.00_);_($* (#,##0.00);_($* ""-""??_);_(@_)"
+                .NumberFormat = "_(€* #,##0.00_);_(€* (#,##0.00);_(€* ""-""??_);_(@_)"
             Case ShortNumber
-                .FontName = "Chinese Rocks Rg"
-                .FontSize = 16
+                .FontName = "Bahnschrift Light SemiCondensed"
+                .fontSize = 28
                 .Bold = True
-                .HAlign = xlRight
+                .HAlign = xlLeft
                 .VAlign = xlCenter
                 .Shrink = True
-                .NumberFormat = "_($* #,##0.00_);_($* (#,##0.00);_($* ""-""??_);_(@_)"
+                .NumberFormat = "_(€* #,##0.00_);_(€* (#,##0.00);_(€* ""-""??_);_(@_)"
             Case TitleText
                 .FontName = "BABAPRO FONT"
-                .FontSize = 28
+                .fontSize = 36
                 .Bold = False
                 .HAlign = xlCenter
                 .VAlign = xlCenter
                 .Shrink = True
             Case NormalText
                 .FontName = "Bahnschrift Light SemiCondensed"
-                .FontSize = 12
+                .fontSize = 36
                 .Bold = True
                 .HAlign = xlLeft
                 .VAlign = xlCenter
                 .Shrink = True
             Case LabelText
-                .FontName = "Japanese Robot"
-                .FontSize = 12
+                .FontName = "Bakari"
+                .fontSize = 16
                 .Bold = True
                 .HAlign = xlCenter
                 .VAlign = xlCenter
                 .Shrink = True
             Case Date
                 .FontName = "Bahnschrift SemiLight"
-                .FontSize = 12
+                .fontSize = 12
                 .Bold = False
                 .HAlign = xlCenter
                 .VAlign = xlCenter
                 .Shrink = True
-            Case Else    'Barcode
-                .FontName = "Code 39-hoch-Logitogo"
-                .FontSize = 60
+
+            Case SmallWideNumber
+                .FontName = "Bahnschrift Light SemiCondensed" '"AZN Unified Oblique"
+                .fontSize = 28
+                .Bold = False
+                .HAlign = xlLeft
+                .VAlign = xlCenter
+                .Shrink = True
+                .NumberFormat = "_(€* #,##0.00_);_(€* (#,##0.00);_(€* ""-""??_);_(@_)"
+            Case BigWideNumber
+                .FontName = "Bahnschrift SemiBold"
+                .fontSize = 36
+                .Bold = False
+                .HAlign = xlLeft
+                .VAlign = xlCenter
+                .Shrink = True
+                .NumberFormat = "_(€* #,##0.00_);_(€* (#,##0.00);_(€* ""-""??_);_(@_)"
+
+            Case Else    '  Barcode
+                .FontName = "code 128" '"CCode39"
+                .fontSize = 90
                 .Bold = False
                 .HAlign = xlCenter
                 .VAlign = xlCenter
-                .Shrink = True
+                .Shrink = False
         End Select
     End With
 
@@ -267,18 +327,17 @@ End Function
 Public Function CreateGrid(Optional ByVal BoxPrice As Variant, Optional ByVal DozPrice As Variant, Optional ByVal BoxQty As Variant, Optional ByVal Barcode As String) As Variant
     Dim Grid        As Variant
     Dim key         As Variant
-    Dim DefaultBoxQty As Variant: DefaultBoxQty = 24
-    
+    Dim DefaultBoxQty As Long: DefaultBoxQty = 24
+
     With this
         ReDim Grid(1 To .RowSize, 1 To .ColumnSize)
-        
+
         If Not Barcode = "" Then
-            With .LabelValues("Barcode") = Barcode
+            .LabelValues("Barcode") = Code128(Barcode) '"Ì*" & Barcode & "*{Î"
         End If
-        
+
         With .ProductCoord
             For Each key In .Keys
-                'Debug.Print key
                 Grid(.item(key)(0), .item(key)(1)) = key
             Next key
         End With
@@ -288,7 +347,6 @@ Public Function CreateGrid(Optional ByVal BoxPrice As Variant, Optional ByVal Do
                 Grid(.item(key)(0), .item(key)(1)) = key
             Next key
         End With
-
 
 
 
@@ -313,6 +371,10 @@ Public Function CreateGrid(Optional ByVal BoxPrice As Variant, Optional ByVal Do
             GoTo ReturnGrid
         End If
 
+        If IsMissing(BoxPrice) Then
+            GoTo ReturnGrid
+        End If
+
         If IsEmpty(BoxPrice) Then
             'DeleteRelated - Replace Labels
             With .ProductCoord
@@ -326,15 +388,23 @@ Public Function CreateGrid(Optional ByVal BoxPrice As Variant, Optional ByVal Do
         End If
 
         '@Update BOX_RELATED_LABELS
-        
+
+        If IsMissing(BoxQty) Then
+            GoTo ReturnGrid
+        End If
+
         If Not IsEmpty(BoxQty) Then
             DefaultBoxQty = BoxQty
         End If
-        
+
         .LabelValues("BoxTotalPrice") = BoxPrice * DefaultBoxQty
         .LabelValues("BoxPrice") = BoxPrice
         .LabelValues("BoxLabel") = "BOX(" & DefaultBoxQty & ")"
-        
+
+        If IsMissing(DozPrice) Then
+            GoTo ReturnGrid
+        End If
+
         If IsEmpty(DozPrice) Then
             'DeleteRelated - Replace Labels
             With .ProductCoord
@@ -349,7 +419,7 @@ Public Function CreateGrid(Optional ByVal BoxPrice As Variant, Optional ByVal Do
         End If
         '@Update DOZ_RELATED_LABELS
         .LabelValues("DozTotalPrice") = DozPrice * 12
-        
+
 ReturnGrid:
     End With
 
@@ -357,7 +427,7 @@ ReturnGrid:
     CreateGrid = Grid
 End Function
 
-Public Function KeyInModel(ByVal item As Object, ByVal Company As Object, key As String, ByRef value As Variant) As Boolean
+Public Function KeyInModel(ByVal item As Object, ByVal company As Object, key As String, ByRef value As Variant) As Boolean
     On Error Resume Next
     value = CallByName(item, key, VbGet)
     If err.Number = 0 Then
@@ -366,7 +436,7 @@ Public Function KeyInModel(ByVal item As Object, ByVal Company As Object, key As
     End If
 
     On Error Resume Next
-    value = CallByName(Company, key, VbGet)
+    value = CallByName(company, key, VbGet)
     If err.Number = 0 Then
         KeyInModel = True
         Exit Function

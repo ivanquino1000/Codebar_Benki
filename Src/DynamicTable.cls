@@ -13,9 +13,9 @@ Option Explicit
 Implements IDataTable
 
 Public Event HeadersPlaced(ByVal Headers As Variant)
-Public Event elementAdded(ByVal Element As item)
+Public Event elementAdded(ByVal element As item)
 Public Event TableUpdated()
-Public Event ElementDeleted(ByVal Element As item)
+Public Event ElementDeleted(ByVal element As item)
 Public Event DataGotten(ByVal elem_num As Long)
 
 Public WithEvents HeadersComp As Headers
@@ -36,14 +36,16 @@ Private SourceTableRef As SourceTab
 Private Type TDynamicTable
     row             As Integer
     column          As Integer
-    range           As range
+    Range           As Range
     SrcBookPath     As String
     NewItemsBookPath As String
     TestBookPath    As String
     ws              As Worksheet
-    TempBookPath    As String
-
+    SessionNewItemsPath As String
+    SesionNewItems  As Collection
+    OdooBookPath    As String
 End Type
+
 
 
 Private this        As TDynamicTable
@@ -54,6 +56,7 @@ Private Sub Class_Initialize()
         .column = 1
 
         Set .ws = ThisWorkbook.ActiveSheet
+        Set .SesionNewItems = New Collection
     End With
     Set HeadersComp = New Headers
     Set ElementsComp = New Elements
@@ -66,17 +69,18 @@ Private Sub Class_Initialize()
 End Sub
 
 Public Sub init(ByVal row As Integer, _
-            ByVal column As Integer, _
-            ByVal ws As Worksheet, _
-            ByVal Headers As Variant _
-            )
+        ByVal column As Integer, _
+        ByVal ws As Worksheet, _
+        ByVal Headers As Variant _
+        )
     With this
         .row = row
         .column = column
         Set .ws = ws
         .SrcBookPath = FindLatestXLSXFile(Environ("USERPROFILE") & "\Downloads\")
-        .NewItemsBookPath = Environ("USERPROFILE") & "\Documents\IMPORT" & "Items.xlsx"
-        .TempBookPath = ThisWorkbook.Path & "\Config" & "\TempData.xmls\"
+        .NewItemsBookPath = Environ("USERPROFILE") & "\Documents\IMPORT" & "\items.xlsx"
+        .SessionNewItemsPath = GetParentPath(ThisWorkbook.Path) & "Config" & "\items.xlsx"
+        .OdooBookPath = GetParentPath(ThisWorkbook.Path) & "Config" & "\Odoo_Items.xls"
         With HeadersComp
             .values = Headers
         End With
@@ -102,10 +106,10 @@ End Sub
 Private Sub UpdateRanges()
 
     With HeadersComp
-        Set .range = this.ws.range( _
-                    this.ws.Cells(this.row, this.column), _
-                    this.ws.Cells(this.row, this.column + UBound(.values)) _
-                    )
+        Set .Range = this.ws.Range( _
+                this.ws.Cells(this.row, this.column), _
+                this.ws.Cells(this.row, this.column + UBound(.values)) _
+                )
     End With
 
     With ElementsComp
@@ -113,32 +117,128 @@ Private Sub UpdateRanges()
         If .values.Count = 0 Then
             EmptyElements = 1
         End If
-        Set .range = this.ws.range( _
-                    this.ws.Cells(this.row + 1, this.column), _
-                    this.ws.Cells(this.row + EmptyElements + .values.Count, this.column + UBound(HeadersComp.values)) _
-                    )
+        Set .Range = this.ws.Range( _
+                this.ws.Cells(this.row + 1, this.column), _
+                this.ws.Cells(this.row + EmptyElements + .values.Count, this.column + UBound(HeadersComp.values)) _
+                )
     End With
     With this
-        Set .range = Union( _
-                    HeadersComp.range, _
-                    ElementsComp.range _
-                    )
+        Set .Range = Union( _
+                HeadersComp.Range, _
+                ElementsComp.Range _
+                )
     End With
 End Sub
 
-Private Sub PrintTest()
-    Dim printingRange As range
-    Dim Label As New CodebarLabel
-    Dim row, column As Integer
-    'Dim LabelRange As Range
-    Set printingRange = Label.range
+Public Sub ShowPrintPreview()
+    On Error Resume Next
+    If ElementsComp.values.Count = 0 Then
+        Debug.Print "Preview Error: No Element To Print Found"
+        Exit Sub
+    End If
 
+    Application.Dialogs(xlDialogPrinterSetup).Show
 
+    Dim PreviewLabel As New Label
+    With PreviewLabel
+        Set .product = ElementsComp.values.item(1)
+        .Model.InitializeFormat light
+        .ToRange
 
+        '  !  @@@ Just First Time Production Run Time'  @@@
 
-    printingRange.PrintOut Copies:=1, Preview:=True, ActivePrinter:=PrinterName
+        'ConfigurePrintingPreferences .ws, .PrintArea.Address
+        .ws.Activate
+    End With
+    On Error GoTo 0
 End Sub
-Private Sub PrintList()
+
+
+Public Sub PrintTest()
+    On Error Resume Next
+    If ElementsComp.values.Count = 0 Then
+        Debug.Print "Print Test Error: No Element To Print Found"
+        Exit Sub
+    End If
+
+    Dim ListLabel   As New Label
+    Dim i           As Long
+
+    Application.Dialogs(xlDialogPrinterSetup).Show
+
+    With ListLabel
+        Set .product = ElementsComp.values.item(1)
+        .Model.InitializeFormat dark
+        .ToRange
+
+
+        .PrintArea.PrintOut Copies:=1
+    End With
+
+    On Error GoTo 0
+End Sub
+
+
+'.PaperSize: Label prop EXCEL = 4.65 * 0.79
+Public Sub PrintList()
+
+    If ElementsComp.values.Count = 0 Then
+        Debug.Print "Print Error: No Element To Print Found"
+        Exit Sub
+    End If
+
+
+    Dim PrintQty    As Integer: PrintQty = 1
+
+    Dim i           As Long
+
+    Dim ListLabel   As Label
+
+    Application.Dialogs(xlDialogPrinterSetup).Show
+
+    Dim selectedPrintingOption As String
+
+    ' Retrieve the selected option
+    selectedPrintingOption = MsgBox("USAR CORTE MANUAL?", vbYesNo, "PrintingMode")
+    
+
+    ' Check the selected option and proceed accordingly
+    If selectedPrintingOption = "" Then
+        Exit Sub
+    End If
+
+
+    For i = 1 To ElementsComp.values.Count
+        Set ListLabel = New Label
+
+        With ListLabel
+
+            With ElementsComp
+                If .values(i).Qty > 0 Then
+                    PrintQty = WorksheetFunction.Ceiling(ElementsComp.values(i).Qty / 3, 1)
+                End If
+            End With
+
+            Set .product = ElementsComp.values.item(i)
+
+            .Model.InitializeFormat IIf(i Mod 2 = 0, dark, light)
+
+            .ToRange
+
+            On Error Resume Next
+            .PrintArea.PrintOut Copies:=PrintQty
+            On Error GoTo 0
+
+            'Corte Manual Seleccionado
+            If selectedPrintingOption = vbYes Then
+                MsgBox "Corte y Presione Enter", vbOKOnly, "PAUSA DE CORTE"
+            End If
+            
+        End With
+
+        Set ListLabel = Nothing
+    Next i
+
 
 End Sub
 
@@ -169,12 +269,12 @@ Public Property Let column(ByVal value As Integer)
     UpdateRanges
 End Property
 
-Public Property Get range() As range
-    Set range = this.range
+Public Property Get Range() As Range
+    Set Range = this.Range
 End Property
 
-Public Property Set range(ByVal value As range)
-    Set this.range = value
+Public Property Set Range(ByVal value As Range)
+    Set this.Range = value
 End Property
 
 Public Property Get SrcBookPath() As String
@@ -184,6 +284,17 @@ End Property
 Public Property Let SrcBookPath(ByVal value As String)
     this.SrcBookPath = value
 End Property
+
+
+'Latest Inplementation
+Public Property Get OdooBookPath() As String
+    OdooBookPath = this.OdooBookPath
+End Property
+
+Public Property Let OdooBookPath(ByVal value As String)
+    this.OdooBookPath = value
+End Property
+'Latest Inplementation
 
 Public Property Get NewItemsBookPath() As String
     NewItemsBookPath = this.NewItemsBookPath
@@ -209,12 +320,12 @@ Public Property Set ws(ByVal value As Worksheet)
     Set this.ws = value
 End Property
 
-Public Property Get TempBookPath() As String
-    TempBookPath = this.TempBookPath
+Public Property Get SessionNewItemsPath() As String
+    SessionNewItemsPath = this.SessionNewItemsPath
 End Property
 
-Public Property Let TempBookPath(ByVal RHS As String)
-    this.TempBookPath = RHS
+Public Property Let SessionNewItemsPath(ByVal RHS As String)
+    this.SessionNewItemsPath = RHS
 End Property
 
 Private Sub IDataTable_Update()
@@ -223,4 +334,11 @@ End Sub
 
 
 
+Public Property Get SesionNewItems() As Collection
+    Set SesionNewItems = this.SesionNewItems
+End Property
+
+Public Property Set SesionNewItems(ByVal RHS As Collection)
+    Set this.SesionNewItems = RHS
+End Property
 

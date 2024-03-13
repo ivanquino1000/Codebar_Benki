@@ -23,23 +23,26 @@ Private Type TLabel
     Instances       As Integer
     ws              As Worksheet
     product         As item
-    Bussiness       As Company
+    Bussiness       As company
+    PrintArea       As Range
 End Type
+
 Private this        As TLabel
+
 
 Public Sub Class_Initialize()
     With this
         .row = 2
         .column = 2
         Set .Model = New Model
-        .Instances = 0
+        .Instances = 2
         Set .ws = ThisWorkbook.Sheets("LabelSheet")
         Set .product = New item
-        Set .Bussiness = New Company
+        Set .Bussiness = New company
     End With
 End Sub
 
-Public Sub build(ByVal item As item, ByVal Bussiness As Company)
+Public Sub build(ByVal item As item, ByVal Bussiness As company)
     With this
         .row = 2
         .column = 2
@@ -54,17 +57,17 @@ End Sub
 'TODO: ON EMPTY MANDATORY ITEMS.METADATA => EXIT AND SHOW AN WARNING MESSAGE
 
 Public Sub ToRange()
-    Dim LabelRange  As range
-    Dim cell        As range
+    Dim labelRange  As Range
+    Dim cell        As Range
 
     With this
         'Define Label Range in Starting Position and Model Dimensions
         'Copy ModelGridMap to LabelRange
-        Set LabelRange = .ws.Cells(.row, .column).Resize(.Model.RowSize, .Model.ColumnSize)
-        .Model.CreateGrid .product.BoxPrice, .product.WholeSalePrice, .product.BoxQty, .product.Code
-        LabelRange = .Model.GridMap
-        
-        For Each cell In LabelRange
+        Set labelRange = .ws.Cells(.row, .column).Resize(.Model.RowSize, .Model.ColumnSize)
+        .Model.GridMap = .Model.CreateGrid(.product.BoxPrice, .product.WholeSalePrice, .product.BoxQty, .product.code)
+        labelRange = .Model.GridMap
+
+        For Each cell In labelRange
             Dim key As String
             Dim keyVal As Variant
             Dim origin As String
@@ -83,7 +86,7 @@ KeyChecker:
                     End If
                     GoTo ToNextCell
                 End If
-                
+
             End If
 
             GoTo ToResizeCell
@@ -111,17 +114,37 @@ ToFormatCell:
             End With
 
             ApplyFormat cell, format
+
+            If key = "Cost" Then
+                convertCost keyVal
+            End If
+
             cell.value = keyVal
 
 ToNextCell:
         Next cell
+
+        'COPY_TO_ADJACENT_CELLS
+        Dim LabelCopies As Long
+        Dim ReplicaRange As Range
+        For LabelCopies = 1 To .Instances
+            Set ReplicaRange = labelRange.Offset(, (.Model.ColumnSize + 1) * LabelCopies)
+            labelRange.Copy
+            ReplicaRange.PasteSpecial Paste:=xlPasteAll
+        Next LabelCopies
+        Application.CutCopyMode = False
+
+        'SET_PRINT_AREA
+        Set .PrintArea = labelRange.Offset(, -1).Resize( _
+                .Model.RowSize + 1, _
+                ((.Model.ColumnSize + 1) * 3) + 1)
+'        MsgBox .PrintArea.Address
     End With
 
-    LabelRange.Columns.AutoFit
-    'LabelRange.Rows.AutoFit
+
 End Sub
 
-Private Function Redimension(ByRef cell As range, ByVal Direction As String, ByVal Places As Integer)
+Private Function Redimension(ByRef cell As Range, ByVal Direction As String, ByVal Places As Integer)
     Select Case Direction
         Case "R"
             Set cell = cell.Resize(1, 1 + Places)
@@ -135,7 +158,6 @@ Private Function Redimension(ByRef cell As range, ByVal Direction As String, ByV
     End Select
     cell.Merge
 End Function
-
 
 Public Property Get row() As Integer
     row = this.row
@@ -185,13 +207,19 @@ Public Property Set product(ByVal RHS As item)
     Set this.product = RHS
 End Property
 
-
-Public Property Get Bussiness() As Company
+Public Property Get Bussiness() As company
     Set Bussiness = this.Bussiness
 End Property
 
-Public Property Set Bussiness(ByVal RHS As Company)
+Public Property Set Bussiness(ByVal RHS As company)
     Set this.Bussiness = RHS
 End Property
 
 
+Public Property Get PrintArea() As Range
+    Set PrintArea = this.PrintArea
+End Property
+
+Public Property Set PrintArea(ByVal RHS As Range)
+    Set this.PrintArea = RHS
+End Property

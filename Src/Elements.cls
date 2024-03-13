@@ -11,37 +11,22 @@ Option Explicit
 
 Public Event ValuesUpdated(ByVal values As Collection)
 
-Private PreviousRange As range
+Private PreviousRange As Range
 
 Private Type TElements
     values As Collection
     Counter As Integer
-    range As range
+    Range As Range
     format As FormatSettings
     NewFormat As FormatSettings
     HeaderMap As Dictionary
-    CodeIds As Dictionary
     NewCodeIds As Dictionary
 End Type
 
 
 Private this As TElements
 
-Public Property Get CodeIds() As Dictionary
-    Set CodeIds = this.CodeIds
-End Property
 
-Public Property Set CodeIds(ByVal RHS As Dictionary)
-    Set this.CodeIds = RHS
-End Property
-
-Public Property Get NewCodeIds() As Dictionary
-    Set NewCodeIds = this.NewCodeIds
-End Property
-
-Public Property Set NewCodeIds(ByVal RHS As Dictionary)
-    Set this.NewCodeIds = RHS
-End Property
 
 Private Sub Class_Initialize()
     With this
@@ -54,16 +39,15 @@ Private Sub Class_Initialize()
             .BgColor = RGB(249, 244, 245)
             .FontColor = vbBlack
             .FontName = "Bahnschrift SemiLight"
-            .FontSize = 14
+            .fontSize = 14
         End With
         With .NewFormat
             .BgColor = RGB(249, 244, 245)
             .FontColor = RGB(255, 87, 20)
             .FontName = "Bahnschrift SemiLight"
-            .FontSize = 14
+            .fontSize = 14
         End With
         Set .HeaderMap = New Dictionary
-        Set .CodeIds = New Dictionary
         Set .NewCodeIds = New Dictionary
         
         With .HeaderMap
@@ -94,7 +78,7 @@ Public Sub Update(ByVal ws As Worksheet, ByVal Headers As Variant)
     
         
 'Show Elemts.values and Special Formating
-    Call ApplyFormat(this.range, this.format)
+    Call ApplyFormat(this.Range, this.format)
     
     With this
         If .values.Count = 0 Or UBound(Headers) = 0 Then
@@ -113,23 +97,20 @@ Public Sub Update(ByVal ws As Worksheet, ByVal Headers As Variant)
             Next column
             row = row + 1
             
-            Dim ElemRange As range
-            Set ElemRange = range.Rows(row - 1) 'ws.range(Cells(range.row, range.column), _
+            Dim ElemRange As Range
+            Set ElemRange = Range.Rows(row - 1) 'ws.range(Cells(range.row, range.column), _
                                      Cells(range.row, range.Columns.Count))
             If elem.IsNew Then
                 Call ApplyFormat(ElemRange, .NewFormat)
             End If
         Next elem
-        this.range.value = ElemArr
-        .range.EntireRow.RowHeight = 40
+        this.Range.value = ElemArr
+        .Range.EntireRow.RowHeight = 40
     End With
     
-    Set PreviousRange = this.range
+    Set PreviousRange = this.Range
 End Sub
 
-Public Function MissingId(Optional ByVal NewItems As Variant) As Integer
-
-End Function
 
 
 Public Property Get HeaderMap() As Object
@@ -157,12 +138,12 @@ Public Property Let Counter(ByVal RHS As Integer)
     this.Counter = RHS
 End Property
 
-Public Property Get range() As range
-    Set range = this.range
+Public Property Get Range() As Range
+    Set Range = this.Range
 End Property
 
-Public Property Set range(ByVal RHS As range)
-    Set this.range = RHS
+Public Property Set Range(ByVal RHS As Range)
+    Set this.Range = RHS
 End Property
 
 Public Property Get format() As FormatSettings
@@ -184,3 +165,11 @@ Public Property Set NewFormat(ByVal RHS As FormatSettings)
 
 
 
+
+Public Property Get NewCodeIds() As Dictionary
+    Set NewCodeIds = this.NewCodeIds
+End Property
+
+Public Property Set NewCodeIds(ByVal RHS As Dictionary)
+    Set this.NewCodeIds = RHS
+End Property

@@ -1,10 +1,7 @@
 //const { default: puppeteer, registerCustomQueryHandler } = require("puppeteer");
 const { chromium, devices } = require('playwright'); // Install npx install chromium 
 const os = require('os');
-const fs = require('fs');
-const { Console } = require("console");
-const { errorMonitor } = require("events");
-const { urlencoded } = require("express");
+const fs = require('node:fs/promises');
 // Export Method 
 // Allowed Extensions From:
 //      - .arca.digital 
@@ -13,6 +10,8 @@ const { urlencoded } = require("express");
 const URL_Address_Local_Path =  `${__dirname}/WebExportUrls.txt`;
 const Platform_Downloads_Path = `${os.homedir}\\Downloads\\`
 
+const Export_Result_Path =   `${__dirname}/WebExportResult.txt`
+
 
 // ************** ON DOMAIN CHANGE *********
 // Change the URLs text file 
@@ -20,16 +19,26 @@ const Platform_Downloads_Path = `${os.homedir}\\Downloads\\`
 // Buttons Remain the same
 
 
+// Operation Result Set To Undefined
+async function updateResultFile(result) {
+    try {
+      await fs.writeFile(Export_Result_Path, result);
+    } catch (err) {
+      console.log(err);
+    }
+}
+  
+
 
 // Operation Result Set To Undefined
 // file write Won't be reflected on debug mode dkw
-fs.writeFile('WebExportResult.txt', 'Undefined', (err) => {
-    if (err) {
-        console.error('Error writing file:', err);
-    } else {
-        console.log('Result File Reset successfully.');
-    }
-});
+// fs.writeFile('WebExportResult.txt', 'Undefined', (err) => {
+//     if (err) {
+//         console.error('Error writing file:', err);
+//     } else {
+//         console.log('Result File Reset successfully.');
+//     }
+// });
 
 const ClientCredentialsList=  {
     Soraza: {
@@ -49,6 +58,9 @@ const ClientCredentialsList=  {
 main();
 
 async function main() {
+    
+    await updateResultFile("Undefined");
+
     try {
         await ExportFromWeb();
     } catch (error) {
@@ -60,8 +72,7 @@ async function ExportFromWeb(){
     //${__dirname} = C:\Users\ivan\Desktop\Codebar_Benki\WebExporter
     // Current Directory
 
-    const ExportItemsPath = `${__dirname}/../`;
-    Web_Url_List = getUrlList(URL_Address_Local_Path);
+    Web_Url_List = await getUrlList(URL_Address_Local_Path);
     
     Web_Url_List.forEach(url => {
 
@@ -105,9 +116,6 @@ async function ExportFromWeb(){
         }
         
     });
-    //console.log(ExportItemsPath)
-
-
 }
 
 // Custom Export Method Depending on URL Extension
@@ -138,7 +146,7 @@ async function ExportArcaDigital(url){
 
             }catch (error) {
                 console.error('Error during Export:', error.message);
-                fs.writeFileSync('WebExportResult.txt', "Failed");
+                await updateResultFile("Failed");
                 await browser.close();
             } 
         }
@@ -153,11 +161,11 @@ async function ExportArcaDigital(url){
     try {
         await start_Download_ArcaDigital (page,url)
         console.error('SUCCESS OPERATION');
-        fs.writeFileSync('WebExportResult.txt', "Success");
+        await updateResultFile("Success");
         
     }catch(error){
         console.error('FAILED OPERATION: Error At Data Extracting :', error.message);
-        fs.writeFileSync('WebExportResult.txt', "Failed");
+        await updateResultFile("Failed");
     }finally{
         browser.close();
         
@@ -211,9 +219,9 @@ async function loginArcaDgital(page,url){
 }
 
 // Returns a list with the URL Addresses
-function getUrlList(ListPath){
+async function getUrlList(ListPath){
     try {
-        const data = fs.readFileSync(ListPath, 'utf-8');
+        const data = await fs.readFile(ListPath, 'utf-8');
         var urlList = data.trim().split('\n');
         if (urlList.length === 0 ){
             console.log('No elements Found')

@@ -14,7 +14,7 @@ Public Event HeadersUpdated(ByVal Headers As Variant)
 Private Type THeaders
     values          As Variant
     Counter         As Integer
-    range           As range
+    Range           As Range
     format          As FormatSettings
 End Type
 
@@ -27,7 +27,7 @@ Private Sub Class_Initialize()
         .Counter = 1
         With .format
             .BgColor = RGB(214, 104, 83)
-            .FontSize = 16
+            .fontSize = 16
             .FontColor = vbWhite
             .FontName = "Bahnschrift SemiLight"
         End With
@@ -41,12 +41,12 @@ Public Sub Update(ByVal ws As Worksheet)
     For Each Header In this.values
 
         ws.Cells( _
-                this.range.row, this.range.column + i _
+                this.Range.row, this.Range.column + i _
                 ).value = Header
 
         i = i + 1
     Next Header
-    Call ApplyFormat(this.range, this.format)
+    Call ApplyFormat(this.Range, this.format)
 
     Exit Sub
 
@@ -80,12 +80,12 @@ Public Property Let Counter(ByVal RHS As Integer)
     this.Counter = RHS
 End Property
 
-Public Property Get range() As range
-    Set range = this.range
+Public Property Get Range() As Range
+    Set Range = this.Range
 End Property
 
-Public Property Set range(ByVal RHS As range)
-    Set this.range = RHS
+Public Property Set Range(ByVal RHS As Range)
+    Set this.Range = RHS
 End Property
 
 Public Property Get format() As FormatSettings

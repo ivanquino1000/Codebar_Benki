@@ -14,14 +14,14 @@ Public Event elementAdded(ByVal element_Id As String, ByVal element_Code As Stri
 
 
 Private Type TItem
-    Id              As Variant
+    ID              As Variant
     BoxQty          As Variant
     Qty             As Variant
     BoxPrice        As Variant
     Cost            As Variant
     SellingPrice    As Variant
     WholeSalePrice  As Variant
-    Code            As String
+    code            As String
     Description     As String
     Name            As String
     Supplier        As String
@@ -35,17 +35,17 @@ Private this        As TItem
 Private Sub Class_Initialize()
     With this
         '.Id = 0
-        '   .Qty = 1
+        .Qty = 1
         .IsNew = False
-        .Code = "A000"
-        .Name = "baseItemName Base desc"
+        .code = "A000"
+        .Name = "@ITEM_NAME_ATTRIBUTE"
         '     .Description = "Empty Desc"
-        '    .Supplier = "Los Incas"
+            .Supplier = "Los Incas"
         '   .Cost = 9.99
-        '  .WholeSalePrice = 999.99
+        '.WholeSalePrice = 999.99
         .SellingPrice = 9999.99
         '    .BoxQty = 24
-        '   .BoxPrice = 99.99
+        '.BoxPrice = 99.99
     End With
 End Sub
 Public Sub Create(ByVal ICode As String, ByVal IName As String, ByVal IDescription As String, _
@@ -53,7 +53,7 @@ Public Sub Create(ByVal ICode As String, ByVal IName As String, ByVal IDescripti
         ByVal IPrice _
         )
     With this
-        .Code = ICode
+        .code = ICode
         .Name = IName
         .Description = IDescription
         .Supplier = ISupplier
@@ -65,20 +65,20 @@ Public Sub Create(ByVal ICode As String, ByVal IName As String, ByVal IDescripti
 End Sub
 
 
-Public Property Get Id() As Variant
-    If IsObject(this.Id) Then
-        Set Id = this.Id
+Public Property Get ID() As Variant
+    If IsObject(this.ID) Then
+        Set ID = this.ID
     Else
-        Id = this.Id
+        ID = this.ID
     End If
 End Property
 
-Public Property Let Id(ByVal RHS As Variant)
-    this.Id = RHS
+Public Property Let ID(ByVal RHS As Variant)
+    this.ID = RHS
 End Property
 
-Public Property Set Id(ByVal RHS As Variant)
-    Set this.Id = RHS
+Public Property Set ID(ByVal RHS As Variant)
+    Set this.ID = RHS
 End Property
 
 Public Property Get BoxQty() As Variant
@@ -177,12 +177,12 @@ Public Property Set WholeSalePrice(ByVal RHS As Variant)
     Set this.WholeSalePrice = RHS
 End Property
 
-Public Property Get Code() As String
-    Code = this.Code
+Public Property Get code() As String
+    code = this.code
 End Property
 
-Public Property Let Code(ByVal RHS As String)
-    this.Code = RHS
+Public Property Let code(ByVal RHS As String)
+    this.code = RHS
 End Property
 
 Public Property Get Description() As String

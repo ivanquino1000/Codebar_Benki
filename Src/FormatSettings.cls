@@ -18,7 +18,7 @@ Private Type TFormatSettings
     BorderWeight As XlBorderWeight
     FontColor As Long
     FontName As String
-    FontSize As Long
+    fontSize As Long
     HAlign As XlHAlign
     Shrink As Boolean
     VAlign As XlVAlign
@@ -26,7 +26,7 @@ Private Type TFormatSettings
 End Type
 Private this As TFormatSettings
 
-Public Event DataInitialized(ByVal BgColor As Long, ByVal FontColor As Long, ByVal FontSize As Long, ByVal FontName As String)
+Public Event DataInitialized(ByVal BgColor As Long, ByVal FontColor As Long, ByVal fontSize As Long, ByVal FontName As String)
 
 Private Sub Class_Initialize()
     With this
@@ -36,9 +36,9 @@ Private Sub Class_Initialize()
         .BorderWeight = xlMedium
         .FontColor = vbWhite
         .FontName = "Courier New"
-        .FontSize = 16
+        .fontSize = 16
         .HAlign = xlCenter
-        .Shrink = False
+        .Shrink = True
         .VAlign = xlCenter
         .NumberFormat = "General"
     End With
@@ -113,12 +113,12 @@ Public Property Let FontName(ByVal value As String)
     this.FontName = value
 End Property
 
-Public Property Get FontSize() As Long
-    FontSize = this.FontSize
+Public Property Get fontSize() As Long
+    fontSize = this.fontSize
 End Property
 
-Public Property Let FontSize(ByVal value As Long)
-    this.FontSize = value
+Public Property Let fontSize(ByVal value As Long)
+    this.fontSize = value
 End Property
 
 Public Property Get HAlign() As XlHAlign
