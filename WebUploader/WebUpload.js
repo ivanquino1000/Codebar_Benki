@@ -119,7 +119,11 @@ async function uploadArcaDigital(client,browser){
     
     //  Go to the Upload URL Address
     try{
+        
+        await loginArcaDgital(page,client)
         await page.goto(client.Url)
+
+        console.log("<> Items Page Loaded ")
     
         //Login Required
         if (page.url().includes('login')){
@@ -130,7 +134,11 @@ async function uploadArcaDigital(client,browser){
             try{
                 if(!page.url().includes('items') ){
                     console.log(`URL Items Page Failed Retriying: ${loginRetries}`)
-                    await loginArcaDgital(page,client);
+                    
+                    if (page.url().includes('login')){
+                        await loginArcaDgital(page,client)
+                    }
+
                     await page.reload()
                 }else{
                     console.log(`Urls Items Page Load Succesfully`);
@@ -140,7 +148,6 @@ async function uploadArcaDigital(client,browser){
 
             }catch (error) {
                 console.error('Error during Export:', error.message);
-                
                 return "Failed";
             } 
         }
@@ -151,7 +158,7 @@ async function uploadArcaDigital(client,browser){
 
     // Place the download from the Items page
     try {
-        await beginUploadArcaDigital(page,client)
+        await beginUploadArcaDigital(page)
         console.error('SUCCESS OPERATION');
         
     }catch(error){
@@ -163,7 +170,7 @@ async function uploadArcaDigital(client,browser){
 }
 
 
-async function beginUploadArcaDigital (page,client){
+async function beginUploadArcaDigital (page){
     // Click Export Button
     await page.getByText('Importar').click();
 

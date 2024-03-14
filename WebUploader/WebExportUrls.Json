@@ -6,13 +6,6 @@
         "WebAppType": "ArcaDigital",
         "User": "almacen.ranty@jbsistemas.com",
         "Password": "@Misti456@"
-      },
-      {
-        "name": "jaiki",
-        "Url": "https://jaiki.arca.digital/items",
-        "WebAppType": "ArcaDigital",
-        "User": "almacen.jaiki@jbsistemas.com",
-        "Password": "@Misti456@"
       }
     ]
 }

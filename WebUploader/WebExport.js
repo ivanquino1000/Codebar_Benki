@@ -1,20 +1,36 @@
 //const { default: puppeteer, registerCustomQueryHandler } = require("puppeteer");
 const { chromium, devices } = require('playwright'); // Install npx install chromium 
+const notifier = require('node-notifier');
 const os = require('os');
 const fs = require('node:fs/promises');
+const { resourceLimits } = require('worker_threads');
 // Export Method 
 // Allowed Extensions From:
 //      - .arca.digital 
 //      - Odoo - Local IP AdddesS
 //      - Non Specified Won't be executed 
-const URL_Address_Local_Path =  `${__dirname}/WebExportUrls.txt`;
+const URL_Address_Local_Path =  `${__dirname}/WebExportUrls.json`;
 const Platform_Downloads_Path = `${os.homedir}\\Downloads\\`
 
 const Export_Result_Path =   `${__dirname}/WebExportResult.txt`
 
 
+var ClientsCredentials = {}
+
+const SucessNotification = {
+        title: 'Descarga de Archivos',
+        message: 'EXITOSO',
+        timeout: 300000
+}
+const FailedNotification = {
+    title: 'Descarga de Archivos',
+    message: 'FALLIDA',
+    timeout: 300000
+}
+
 // ************** ON DOMAIN CHANGE *********
 // Change the URLs text file 
+// Change the Clients Object
 // Credentials in Login
 // Buttons Remain the same
 
@@ -40,20 +56,21 @@ async function updateResultFile(result) {
 //     }
 // });
 
-const ClientCredentialsList=  {
-    Soraza: {
-        User:"admin.soraza@jbsistemas.com",
-        Password:"@Misti456@"
-    },
-    Larico: {
-        User:"admin.larico@jbsistemas.com",
-        Password:"@Misti456@"
-    },
-    Odoo:{
-        User:"12345@gmail.com",
-        Password:"abcde"
+
+async function getClientsData() {
+    try {
+        const data = await fs.readFile(URL_Address_Local_Path, 'utf8');
+        try {
+            // Parse the JSON content and return the parsed data
+            return JSON.parse(data);
+        } catch (parseError) {
+            throw new Error(`Error Parsing Client Json: ${parseError}`);
+        }
+    } catch (readError) {
+        throw new Error(`Error Reading Client Json: ${readError}`);
     }
 }
+
 
 main();
 
@@ -62,6 +79,7 @@ async function main() {
     await updateResultFile("Undefined");
 
     try {
+        ClientsCredentials = await getClientsData();
         await ExportFromWeb();
     } catch (error) {
         console.error('Error:', error);
@@ -71,72 +89,65 @@ async function main() {
 async function ExportFromWeb(){
     //${__dirname} = C:\Users\ivan\Desktop\Codebar_Benki\WebExporter
     // Current Directory
-
-    Web_Url_List = await getUrlList(URL_Address_Local_Path);
-    
-    Web_Url_List.forEach(url => {
-
-        const urlRegex = /^(https?:\/\/)?((\d{1,3}\.){3}\d{1,3}|([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,})(\/\S*)?$/;
-        const match = url.match(urlRegex);
-        
-        var urlExtension = ""
-        let urlObject ={}
-
-        if (match) {
-            const protocol = match[1] || 'http://';
-            const domain = match[2];
-            const path = match[5] || '/';
-            
-            urlObject = {
-                completeUrl: protocol + domain + path,
-                domain: domain,
-                path: path,
-                protocol: protocol
-            };
-
-        }else{
-            return;
-        }
-
-        // Domain Last Word Criteria
-        const parts = urlObject.domain.split('.');
-        urlExtension = parts[parts.length - 1]; // Get the last part after splitting by '.'
-
-        switch(urlExtension){
-            case 'digital':
-                ExportArcaDigital(urlObject)
-
+    const browser = await chromium.launch({headless:false})
+    let exportResult = "Undefined"
+    let ResultsLogger = ""
+    for (const client of ClientsCredentials.clients){
+        switch(client.WebAppType){
+            case 'ArcaDigital':
+                exportResult = await ExportArcaDigital(client,browser);
+                ResultsLogger += `${exportResult}`;
                 break;
-            case 'odoo':
-                
+            case 'Odoo':
+                exportResult = await exportOdoo(client,browser)
+                ResultsLogger += `${exportResult}`;
                 break;
             default:
-                console.log(`Invalid Url Extension: ${urlObject.completeUrl}` )
-                return;
+                console.log(`${client.name} = Invalid WebApp: ${client.Url}`)
+                break;
         }
-        
-    });
+    }
+    console.log("ResultsLogger: ",ResultsLogger)
+    if (ResultsLogger === "Success"){
+        notifier.notify(SucessNotification)
+    
+    }else{
+        notifier.notify(FailedNotification)
+    }
+
+    updateResultFile(ResultsLogger)
+    browser.close();
 }
 
 // Custom Export Method Depending on URL Extension
-async function ExportArcaDigital(url){
-    const browser = await chromium.launch({headless:false})
+async function ExportArcaDigital(client,browser){
     const page = await browser.newPage();
     
     //Ensure Items Url Path to be loaded
     try{
-        await page.goto(url.completeUrl)
+
+        await loginArcaDgital(page,client)
+        await page.goto(client.Url)
+
+        console.log("<> Items Page Loaded ")
     
-        //Log in Required
+        //Log in - Items Redirection
         if (page.url().includes('login')){
-            await loginArcaDgital(page,url)
+            await loginArcaDgital(page,client)
+            console.log("<> First Login Completed ")
         }
         let loginRetries = 0 ;
         while (loginRetries<4){
             try{
+                // Error Loading site or LogIn Redirection
                 if(!page.url().includes('items') ){
                     console.log(`URL Items Page Failed Retriying: ${loginRetries}`)
-                    await loginArcaDgital(page,url);
+                    
+                    //  LogIn Redirection - Login
+                    if (page.url().includes('login')){
+                        await loginArcaDgital(page,client)
+                    }
+                    //  Error Redirection - Reload
                     await page.reload()
                 }else{
                     console.log(`Urls Items Page Load Succesfully`);
@@ -146,34 +157,31 @@ async function ExportArcaDigital(url){
 
             }catch (error) {
                 console.error('Error during Export:', error.message);
-                await updateResultFile("Failed");
-                await browser.close();
+                return "Failed";
             } 
         }
     }catch (error) {
         console.error('Error during Export:', error.message);
-        await browser.close();
-    } finally {
-        //await browser.close();
-    }
+        return "Failed";
+    } 
 
     // Place the download from the Items page
     try {
-        await start_Download_ArcaDigital (page,url)
-        console.error('SUCCESS OPERATION');
-        await updateResultFile("Success");
+        await start_Download_ArcaDigital (page)
+        console.log('SUCCESS OPERATION');
+        return "Success";
         
     }catch(error){
         console.error('FAILED OPERATION: Error At Data Extracting :', error.message);
-        await updateResultFile("Failed");
+        return "Failed";
     }finally{
-        browser.close();
+        return "Success";
         
     }
     
 }
 
-async function start_Download_ArcaDigital (page,url){
+async function start_Download_ArcaDigital (page){
     // Click Export Button
     await page.click('button.btn.btn-custom.btn-sm.mt-2.mr-2.dropdown-toggle');
 
@@ -200,7 +208,7 @@ async function start_Download_ArcaDigital (page,url){
     const ProccessButton = await  page.$$('.el-button.el-button--primary.el-button--small');
  
     // Start waiting for download before clicking. Note no await.
-    const downloadPromise = page.waitForEvent('download');
+    const downloadPromise = page.waitForEvent('download',{timeout:300000 });
 
     await ProccessButton[2].click(); 
     //await page.getByText('Download file').click();
@@ -210,27 +218,41 @@ async function start_Download_ArcaDigital (page,url){
     await download.saveAs(Platform_Downloads_Path + download.suggestedFilename());
 }
 
-async function loginArcaDgital(page,url){
-    await page.goto(url.protocol + url.domain + "/login")
-    await page.type('#email', ClientCredentialsList.Soraza.User)
-    await page.type('#password', ClientCredentialsList.Soraza.Password)
-    await page.click('.btn-signin')
-    return;
+function UrlFactory(url){
+    const urlRegex = /^(https?:\/\/)?((\d{1,3}\.){3}\d{1,3}|([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,})(\/\S*)?$/;
+    const match = url.match(urlRegex);
+    
+
+    let urlObject ={}
+
+    if (match) {
+        const protocol = match[1] || 'http://';
+        const domain = match[2];
+        const path = match[5] || '/';
+        
+        urlObject = {
+            completeUrl: protocol + domain + path,
+            domain: domain,
+            path: path,
+            protocol: protocol
+        };
+        return urlObject
+
+    }else{
+        return;
+    }
 }
 
-// Returns a list with the URL Addresses
-async function getUrlList(ListPath){
-    try {
-        const data = await fs.readFile(ListPath, 'utf-8');
-        var urlList = data.trim().split('\n');
-        if (urlList.length === 0 ){
-            console.log('No elements Found')
-            throw new Error('Empty URL List')
-        }
-        return urlList
+async function loginArcaDgital(page,client){
+    let urlObject = UrlFactory(client.Url)
+    
+    await page.goto(urlObject.protocol + urlObject.domain + "/login")
+    
+    console.log("<> Login Page Loaded")
+    
+    await page.type('#email', client.User)
+    await page.type('#password', client.Password)
+    await page.click('.btn-signin')
+    return;
 
-    }catch(error){
-        console.log('Error Reading Urls List from Text File', error)
-        return []
-    }
 }
