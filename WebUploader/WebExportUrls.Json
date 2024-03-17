@@ -1,10 +1,10 @@
 {
     "clients": [
       {
-        "name": "ranty",
-        "Url": "https://ranty.arca.digital/items",
+        "name": "soraza",
+        "Url": "https://soraza.arca.digital/items",
         "WebAppType": "ArcaDigital",
-        "User": "almacen.ranty@jbsistemas.com",
+        "User": "admin.soraza@jbsistemas.com",
         "Password": "@Misti456@"
       }
     ]
