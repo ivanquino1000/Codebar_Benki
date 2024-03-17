@@ -33,15 +33,19 @@ const createWindow = async () => {
         height: 200,
         alwaysOnTop:true,
         autoHideMenuBar:true,
+        //maximizable:false,
+        //minimizable:false,
+        //frame:false,
+        //roundedCorners:true,
         //titleBarStyle:'hidden',
-
         webPreferences: {
             devTools:true,
             nodeIntegration: true,
             contextIsolation:false,
-            x: width - 800, // Adjust based on the window width
-            y: height - 600,
-        }
+        },
+        
+        x: width - 400, 
+        y: height - 400,
     })
     mainWindow.setTitle(app_operation_mode == 'upload'? 'Subida de Productos':'Descarga de Productos')
     mainWindow.loadFile('progressView.html');
